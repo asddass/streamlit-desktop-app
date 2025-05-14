@@ -45,7 +45,7 @@ def extract_imports(script_path: str) -> List[str]:
     Extract a list of imported modules from a Python script.
 
     This function analyzes the AST (Abstract Syntax Tree) of a Python script
-    to identify all `import` and `from ... import ...` statements, returning 
+    to identify all `import` and `from ... import ...` statements, returning
     a list of fully qualified module names.
 
     Args:
@@ -62,16 +62,14 @@ def extract_imports(script_path: str) -> List[str]:
 
     # Traverse the AST to find import statements
     for node in ast.walk(tree):
+        # Handle `import module` or `import module as alias`
         if isinstance(node, ast.Import):
-            # Handle `import module` or `import module as alias`
             for module in node.names:
-                imports.add(module.name)  # Only add the module name
+                imports.add(module.name.split(".")[0])
+        # Handle `from module import name` or `from module import name as alias`
         elif isinstance(node, ast.ImportFrom):
-            # Handle `from module import name` or `from module import name as alias`
             if node.module:
-                for alias in node.names:
-                    # Add the fully qualified module name
-                    imports.add(f"{node.module}.{alias.name}")
+                imports.add(node.module.split(".")[0])
 
     # Return a sorted list of unique imports
     return sorted(imports)
@@ -101,10 +99,10 @@ def parse_streamlit_options(
     Examples:
         >>> parse_streamlit_options(["--theme.base", "dark"])
         {"theme.base": "dark"}
-        
+
         >>> parse_streamlit_options(["--server.headless"])
         {"server.headless": "true"}
-        
+
         >>> parse_streamlit_options({"theme.base": "dark"})
         {"theme.base": "dark"}
     """
@@ -126,7 +124,9 @@ def parse_streamlit_options(
                 options_dict[key] = value
             else:
                 current_key = token.lstrip("-")
-                options_dict[current_key] = "true"  # Assume flag is True unless overridden
+                options_dict[current_key] = (
+                    "true"  # Assume flag is True unless overridden
+                )
         else:
             # This token is the value for the last key
             if current_key:
@@ -220,7 +220,6 @@ if __name__ == "__main__":
     start_desktop_app(get_script_path(), title="{name}", options={parse_streamlit_options(streamlit_options)})
 """
         wrapper.write(wrapper_content.encode())
-
 
     args = [
         "--name",
